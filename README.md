@@ -13,6 +13,10 @@ imaging automation is handled by http://ccdware.com/products/ccdap5/
 
 Scripts are dependent on ASCOM 6.3 https://ascom-standards.org/
 
+Boltwood safety driver/Observing conditions https://ascom-standards.org/Downloads/SafetyMonitorDrivers.htm
+
+Ascom Driver Access (reference for scripting) http://www.ascom-standards.org/Help/Developer/html/N_ASCOM_DriverAccess.htm
+
 imaging and camera control is handled by MaximDL5 http://www.diffractionlimited.com/help/maximdl/MaxIm-DL.htm, see "Scripting" section
 
 

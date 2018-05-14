@@ -1,5 +1,44 @@
 Set objShell = CreateObject("WScript.Shell")
+
+Dim safe
+Dim counter
+counter = 1
+
 objShell.run "C:\Users\brians\Dropbox\ASTRO\Software\sunwait.exe wait set offset +01:00:00 40N 111W",0, True
+
+Set sm = CreateObject("ASCOM.Boltwood.OkToOpen.SafetyMonitor")
+sm.Connected = True
+
+Do Until safe = True
+
+    safe = sm.IsSafe
+	If safe = True Then
+	   sm.Connected = False
+	   Exit Do
+	Else						' not safe to contnue, lets wait up to 10 minutes
+		If counter >= 11 Then 
+		    sm.Connected = False
+			Exit Do
+		Else
+			counter = counter + 1
+			wscript.sleep(60000)
+		End If
+	
+	End If
+		
+Loop
+
+
+If safe = True Then 
+	msgBox "Safe to open, continuing..."
+	sm.Connected = False
+	
+	Else	
+	msgBox "Not safe to open, exiting..."
+	sm.Connected = False
+	Wscript.Quit
+	
+End If
  
 Set roof=CreateObject("ASCOM.SkyRoofHub.Dome")              'Assign the variable "roof" to the ASCOM driver object
 'Set objShell = WScript.CreateObject("WScript.Shell")       'Shell for PopUp messages

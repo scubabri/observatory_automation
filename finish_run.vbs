@@ -10,20 +10,27 @@ Set oc = Nothing
 
 Set scope = CreateObject("ASCOM.Celestron.Telescope")
 scope.Connected = true
-scope.Park
+
+if scope.AtPark = False Then
+	scope.Park
+End If
+
 scope.Connected = false
 
-objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.8 i 2",0, True ' power off the mount
+'objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.8 i 2",0, True ' power off the mount
 
 Set scope = Nothing
 
 Set roof=CreateObject("ASCOM.SkyRoofHub.Dome")
 roof.Connected = True        		 						 'Assign the variable "roof" to the ASCOM driver object
 'objShell.Popup "Closing Roof...", Timeout, PopUp_Title      'Status message
-roof.closeshutter 											 'Close the roof
 
-while roof.shutterstatus <> 1                         		 'Loop until the driver reports the roof is closed
-wend
+if roof.shutterstatus <> 1 Then									 ' Check to see if roof is opened before trying to close
+	roof.closeshutter 										     'Close the roof
+	while roof.shutterstatus <> 1                         		 'Loop until the driver reports the roof is closed
+	wend
+
+End If
 
 'objShell.Popup "Roof Closed", Timeout, PopUp_Title          'Status message
 roof.connected = false                                       'Disconnect from driver
@@ -57,7 +64,10 @@ End If
 
 Set myCamera = Nothing
 
-objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.6 i 2",0, True 'power off camera 
-objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.7 i 2",0, True 'power off focuser
+'objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.6 i 2",0, True 'power off focuser 
+objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.7 i 2",0, True 'power off camera
+
+
+objShell.Run "shutdown.exe /R /T 5 /C ""Rebooting your computer now!"" "
 
 Set objShell = Nothing

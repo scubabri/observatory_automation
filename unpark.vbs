@@ -8,10 +8,10 @@ Const PopUp_Title = "SkyRoof Driver Script"
 
 Set roof=CreateObject("ASCOM.SkyRoofHub.Dome")        'Assign the variable "roof" to the ASCOM driver object
 roof.connected = true 
-set scope = CreateObject("ASCOM.Celestron.Telescope")
+set scope = CreateObject("ASCOM.SoftwareBisque.Telescope")
 scope.Connected = true
 
-if (roof.shutterstatus = 0) And (scope.AtPark = True) Then
+if roof.shutterstatus = 0 Then
 	
 	'MsgBox "Press enter to unpark the scope ", 0, "Press enter to unpark scope"
 	scope.UnPark

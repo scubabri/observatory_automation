@@ -8,7 +8,7 @@ oc.Connected = False
 
 Set oc = Nothing
 
-Set scope = CreateObject("ASCOM.Celestron.Telescope")
+Set scope = CreateObject("ASCOM.SoftwareBisque.Telescope")
 scope.Connected = true
 
 if scope.AtPark = False Then
@@ -66,8 +66,9 @@ Set myCamera = Nothing
 
 'objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.6 i 2",0, True 'power off focuser 
 objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.7 i 2",0, True 'power off camera
+objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.4 i 2",0, True 'power off fan, just in case
 
 
-objShell.Run "shutdown.exe /R /T 5 /C ""Rebooting your computer now!"" "
+'objShell.Run "shutdown.exe /R /T 5 /C ""Rebooting your computer now!"" "
 
 Set objShell = Nothing

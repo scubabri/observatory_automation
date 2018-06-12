@@ -21,7 +21,7 @@ Do Until safe = True
 	rain = oc.RainRate
 	
 	
-	If (clouds < 60) AND (rain = 0) Then 
+	If (clouds < 50) AND (rain = 0) Then 
 			safe = true
 		else
 			safe = false
@@ -32,7 +32,7 @@ Do Until safe = True
 	   oc.Connected = False
 	   Exit Do
 	Else						' not safe to contnue, lets wait up to 30 minutes
-		If counter >= 30 Then 
+		If counter >= 60 Then 
 		    sm.Connected = False
 			oc.Connected = False
 			Exit Do
@@ -73,15 +73,15 @@ End If
 
 roof.connected = false
 
-objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.4 i 1",0, True 'power on Fan to aid cooling
-objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.6 i 1",0, True 'power on the focuser
+objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.6 i 1",0, True 'power on Fan to aid cooling
 objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.7 i 1",0, True 'power on the camera
 objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.8 i 1",0, True 'power on the mount
 
 ' need to put checks to verify devices powered on.
 ' need to put checks to verify scope, camera, focuser and roof status.
 
-wscript.sleep(30000) 								        'Sleep for 60 seconds for things to settle 
+wscript.sleep(3600000) 								        'Sleep for 60 minutes before running ccdap.
+'lets change this to a loop to keep an eye on clouds/rain after opening the roof
 objShell.run """C:\Program Files (x86)\CCDWare\CCDAutoPilot5\CCDAutoPilot5.exe""",0, False
 
 Set objShell = Nothing

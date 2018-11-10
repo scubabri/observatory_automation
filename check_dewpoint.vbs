@@ -10,22 +10,25 @@ wscript.sleep(3000)
 
 If roof.shutterstatus = 0 Then
 	
-	Do Until roof.shutterstatus = 1
-		tempc = oc.Temperature
+	    tempc = oc.Temperature
 		dewpointc = oc.Dewpoint
 		spreadc = (tempc - dewpointc)
-		if (spreadc < 5) Then
-			msgbox spreadc
+		humidity = oc.Humidity
+		
+		If (spreadc < 12) OR (humidity > 50) Then
+			'msgbox spreadc
 			objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.4 i 1",0, True 'power on dew heater
+		Else
+			If (spreadc > 12) AND (humidity < 50) Then
+				objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.4 i 2",0, True 'power off dew heater
+			End If
 		End If
-		wscript.sleep(60000)
-	Loop
-	
-	objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.4 i 0",0, True 'power off dew heater
+		
+End If
 
-	End If
-
-
+If roof.shutterstatus = 1 Then
+	objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.4 i 2",0, True 'power off dew heater
+End If
 
 oc.Connected = False
 roof.connected = False

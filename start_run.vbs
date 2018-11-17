@@ -6,7 +6,7 @@ Dim rcounter
 counter = 1
 rcounter = 1
 
-objShell.run "C:\Users\brians\Dropbox\ASTRO\Software\sunwait.exe wait astronomical set offset +02:00:00 40N 111W",0, True
+'objShell.run "C:\Users\brians\Dropbox\ASTRO\Software\sunwait.exe wait astronomical set offset +02:00:00 40N 111W",0, True
 
 Set sm = CreateObject("ASCOM.Boltwood.OkToOpen.SafetyMonitor")
 Set oc = CreateObject("ASCOM.Boltwood.ObservingConditions")
@@ -148,7 +148,10 @@ If roof.shutterstatus = 0 Then
 
 	'wscript.sleep(1800000) 								        'Sleep for 60 minutes before running ccdap.
 	'lets change this to a loop to keep an eye on clouds/rain after opening the roof
-	objShell.run """C:\Program Files (x86)\CCDWare\CCDAutoPilot5\CCDAutoPilot5.exe""",0, False
+	'objShell.run """C:\Program Files (x86)\CCDWare\CCDAutoPilot5\CCDAutoPilot5.exe""",0, False
+     objShell.run """C:\Program Files (x86)\Software Bisque\TheSkyX Professional Edition\TheSkyX.exe""",4, False
+
+	
 
 Else 
 

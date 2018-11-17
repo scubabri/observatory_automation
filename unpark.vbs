@@ -18,6 +18,7 @@ if roof.shutterstatus = 0 Then
 	scope.FindHome()
 	'Msgbox "Scope unparked and tracking"
 	objShell.run "C:\usr\bin\snmpset.exe -v 1 -c private bs-obspdu.fl240.com PowerNet-MIB::sPDUOutletCtl.6 i 2",0, True 'power off fan
+	objShell.run """C:\Users\brians\AppData\Local\Apps\2.0\1VAJZAH0.0TT\NRRZANR1.0QO\skyr..tion_d2275ca0e4e6fd85_0001.0000_fde1d24b8ff66f56\SkyRoof.exe""",4, False
 
 Else 
 

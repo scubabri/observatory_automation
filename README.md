@@ -9,7 +9,7 @@ Roof control is handled by http://interactiveastronomy.com/skyroof.html
 
 Weather monitoring is handled by http://interactiveastronomy.com/skyalertindex.html
 
-imaging automation is handled by http://ccdware.com/products/ccdap5/
+imaging automation is handled by http://ccdware.com/products/ccdap5/ and/or ccd commander http://ccdcommander.com/
 
 Scripts are dependent on ASCOM 6.3 https://ascom-standards.org/
 
@@ -17,7 +17,8 @@ Boltwood safety driver/Observing conditions https://ascom-standards.org/Download
 
 Ascom Driver Access (reference for scripting) http://www.ascom-standards.org/Help/Developer/html/N_ASCOM_DriverAccess.htm
 
-imaging and camera control is handled by MaximDL5 http://www.diffractionlimited.com/help/maximdl/MaxIm-DL.htm, see "Scripting" section
+imaging and camera control is handled by MaximDL5 http://www.diffractionlimited.com/help/maximdl/MaxIm-DL.htm, see "Scripting" section or TheSkyX http://www.bisque.com/scriptTheSkyX/
+
 
 
 

@@ -149,9 +149,18 @@ If roof.shutterstatus = 0 Then
 	'wscript.sleep(1800000) 								        'Sleep for 60 minutes before running ccdap.
 	'lets change this to a loop to keep an eye on clouds/rain after opening the roof
 	'objShell.run """C:\Program Files (x86)\CCDWare\CCDAutoPilot5\CCDAutoPilot5.exe""",0, False
-     objShell.run """C:\Program Files (x86)\Software Bisque\TheSkyX Professional Edition\TheSkyX.exe""",4, False
-
+    objShell.run """C:\Program Files (x86)\Software Bisque\TheSkyX Professional Edition\TheSkyX.exe""",4, False
+	wscript.sleep(15000)
+	'objShell.run "C:\CCD Commander\CCDCommander.exe ""AutoRun "C:\CCD Commander\Actions\NEOCP_11_18_2018_.act"""",4, False
+	'objShell.run """C:\CCD Commander\CCDCommander.exe AutoRun "C:\CCD Commander\Actions\NEOCP_11_18_2018_.act"""",4, False
 	
+	Dim strPath1, strAttr1, strAttr2
+
+    strPath1 = """C:\CCD Commander\CCDCommander.exe"""
+    strAttr1 = " AutoRun "
+    strAttr2 = """C:\CCD Commander\Actions\NEOCP_11_18_2018.act"""
+
+	objShell.Run strPath1 & strAttr1 & strAttr2 
 
 Else 
 

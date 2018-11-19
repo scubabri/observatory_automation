@@ -56,7 +56,7 @@ End If
 
 'objShell.Popup "Roof Closed", Timeout, PopUp_Title          'Status message
 roof.connected = false                                       'Disconnect from driver
-
+objShell.Run "taskkill.exe /IM SkyRoof.exe" 
 Set roof = Nothing                                             'Dispose object
 
 

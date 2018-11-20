@@ -12,9 +12,7 @@ strSaveTo = "D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO"
 ' WGet saves file always on the actual folder. So, change the actual folder for C:\, where we want to save file
 objShell.CurrentDirectory = strSaveTo
  
-' "C:\wget.exe" "http://download.windowsupdate.com/microsoftupdate/v6/wsusscan/wsusscn2.cab" -N
 objShell.Run Quotes(strFolder & "\wget.exe") & " " & Quotes(strLink) & " -N",1,True
-' -N: Continue download only if the local version is outdated.
 
 objShell.CurrentDirectory = strFolder
  
@@ -43,7 +41,7 @@ Do Until objFileRead.AtEndOfStream
 	obs = Mid(strLine, 79,4)
 	seen = Mid(strLine, 96,7)
 	
-    if (CSng(score) > 80) AND (CSng(vmag) < 19) AND (CSng(obs) > 4) AND (CSng(seen) < .8) Then
+    if (CSng(score) > 80) AND (CSng(vmag) < 19.6) AND (CSng(obs) > 4) AND (CSng(seen) < .8) Then
 	msgbox strLine
 	objFileToWrite.WriteLine(strLine)
 	

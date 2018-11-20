@@ -5,9 +5,9 @@ strFolder = objFSO.GetParentFolderName(objFile) ' C:
 
 Set objShell = CreateObject("WScript.Shell")
  
-strLink = "https://minorplanetcenter.net/iau/NEO/neocp.txt"
-' Use strFolder to save on the same location of this script.
-strSaveTo = "D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO"
+strLink = "https://minorplanetcenter.net/iau/NEO/neocp.txt" 
+
+strSaveTo = "D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO"    ' Use strFolder to save on the same location of this script.
  
 ' WGet saves file always on the actual folder. So, change the actual folder for C:\, where we want to save file
 objShell.CurrentDirectory = strSaveTo
@@ -24,12 +24,11 @@ End Function
 
 
 Const ForReading = 1
-Const ForAppending = 8
 Set objFSO = CreateObject("Scripting.FileSystemObject")
-Set objFileRead = objFSO.OpenTextFile("D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO\neocp.txt", ForReading)
-Set objFileWrite = objFSO.CreateTextFile("D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO\output.txt")
+Set objFileRead = objFSO.OpenTextFile("D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO\neocp.txt", ForReading) ' change path for input file from wget 
+Set objFileWrite = objFSO.CreateTextFile("D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO\output.txt")  ' change path for output directory
 objFileWrite.Close
-Set objFileToWrite = CreateObject("Scripting.FileSystemObject").OpenTextFile("D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO\output.txt",8,true)
+Set objFileToWrite = CreateObject("Scripting.FileSystemObject").OpenTextFile("D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO\output.txt",8,true)  ' change path for output directory
 
 Do Until objFileRead.AtEndOfStream
 
@@ -37,14 +36,14 @@ Do Until objFileRead.AtEndOfStream
     
 	object = Mid(strLine, 1,7)
 	score = Mid(strLine, 9,3)
+	dec = Mid(strLine, 35,7)
 	vmag = Mid(strLine, 44,4)
 	obs = Mid(strLine, 79,4)
 	seen = Mid(strLine, 96,7)
 	
-    if (CSng(score) > 80) AND (CSng(vmag) < 19.6) AND (CSng(obs) > 4) AND (CSng(seen) < .8) Then
-	msgbox strLine
-	objFileToWrite.WriteLine(strLine)
-	
+    if (CSng(score) >= 80) AND (CSng(dec) >= 10) AND (CSng(vmag) <= 19.6) AND (CSng(obs) >= 4) AND (CSng(seen) <= .8) Then
+		msgbox strLine
+		objFileToWrite.WriteLine(strLine)
 	End If	
 Loop
 

@@ -28,8 +28,8 @@ if objFSO.FileExists(mpcorbSaveFile) then
 	objFSO.DeleteFile mpcorbSaveFile
 end if
 
-if objFSO.FileExists(strFolder+"\output.txt") then
-	objFSO.DeleteFile strFolder+"\output.txt"
+if objFSO.FileExists(neocpOutputFile) then
+	objFSO.DeleteFile neocpOutputFile
 end if
 
 objShell.Run Quotes(strFolder & "\wget.exe") & " " & Quotes(neocpLink) & " -N",1,True 		'download current neocp.txt from MPC 

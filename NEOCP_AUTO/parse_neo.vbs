@@ -40,13 +40,13 @@ Set objFileToWrite = CreateObject("Scripting.FileSystemObject").OpenTextFile(neo
 Set orbFileToWrite = CreateObject("Scripting.FileSystemObject").OpenTextFile(mpcorbSaveFile,8,true)  ' MPCORB.dat output
 
 Do Until objFileRead.AtEndOfStream
-    strLine = objFileRead.ReadLine
-	object = Mid(strLine, 1,7)
-	score = Mid(strLine, 9,3)
-	dec = Mid(strLine, 35,7)
-	vmag = Mid(strLine, 44,4)
-	obs = Mid(strLine, 79,4)
-	seen = Mid(strLine, 96,7)
+    strLine = objFileRead.ReadLine						' its probably a good idea NOT to touch the positions as they are fixed position.
+	object = Mid(strLine, 1,7)							' temporary object designation
+	score = Mid(strLine, 9,3)							' neocp desirablility score from 0 to 100, 100 being most desirable.
+	dec = Mid(strLine, 35,7)							' declination 
+	vmag = Mid(strLine, 44,4)							' if you dont know what this is, change hobbies
+	obs = Mid(strLine, 79,4)							' how many observations has it had
+	seen = Mid(strLine, 96,7)							' when was the object last seen
 	
     if (CSng(score) >= 80) AND (CSng(dec) >= 0) AND (CSng(vmag) <= 19.6) AND (CSng(obs) >= 4) AND (CSng(seen) <= .8) Then
 	'if (CSng(score) >= 100)  Then 											' for testing, comment out the above line and uncomment this one to get more objects.

@@ -48,8 +48,8 @@ Do Until objFileRead.AtEndOfStream
 	obs = Mid(strLine, 79,4)
 	seen = Mid(strLine, 96,7)
 	
-    'if (CSng(score) >= 80) AND (CSng(dec) >= 0) AND (CSng(vmag) <= 19.6) AND (CSng(obs) >= 4) AND (CSng(seen) <= .8) Then
-	if (CSng(score) >= 100)  Then
+    if (CSng(score) >= 80) AND (CSng(dec) >= 0) AND (CSng(vmag) <= 19.6) AND (CSng(obs) >= 4) AND (CSng(seen) <= .8) Then
+	'if (CSng(score) >= 100)  Then 											' for testing, comment out the above line and uncomment this one to get more objects.
 		'msgbox strLine														' output selected neocp for testing only
 		objFileToWrite.WriteLine(strLine)									' append neocp object to output.txt
 		

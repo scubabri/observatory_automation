@@ -4,16 +4,16 @@ strScriptFile = Wscript.ScriptFullName 													' D:\Dropbox\ASTRO\SCRIPTS\N
 Set objFSO = CreateObject("Scripting.FileSystemObject")
 Set objFile = objFSO.GetFile(strScriptFile)
 strFolder = objFSO.GetParentFolderName(objFile) 										' D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO
+strSaveToDir = "D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO"    								' base directory for all operations
  
 neocpLink = "https://minorplanetcenter.net/iau/NEO/neocp.txt" 							' minorplanetcenter URL, shouldnt need to change this
-neocpFile = "D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO\neocp.txt"								' where to put the downloaded neocp.txt, adjust as required.
+neocpFile = strSaveToDir+"\neocp.txt"								' where to put the downloaded neocp.txt, adjust as required.
+neocpOutputFile = strSaveToDir+"\output.txt"						' where to put output of selected NEOCP objects for further parsing
 
 orbLinkBase = "https://cgi.minorplanetcenter.net/cgi-bin/showobsorbs.cgi?Obj="			' base url to get NEOCPNomin orbit elements, shouldnt need to change this
 orbSaveFile = "\orbits.txt"
-neocpOutputFile = "D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO\output.txt"						' where to put output of selected NEOCP objects for further parsing
 
-mpcorbSaveFile = "D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO\MPCORB.dat"						' the final (almost) MPCORB.dat 
-strSaveToDir = "D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO"    								' base directory for all operations
+mpcorbSaveFile = strSaveToDir+"\MPCORB.dat"						' the final (almost) MPCORB.dat 
  
 ' WGet saves file always on the actual folder. So, change the actual folder for C:\, where we want to save file
 objShell.CurrentDirectory = strSaveToDir

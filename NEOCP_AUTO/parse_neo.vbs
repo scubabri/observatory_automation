@@ -65,7 +65,7 @@ Do Until objFileRead.AtEndOfStream
 			If colMatches.Count > 0 Then
 				For Each strMatch in colMatches
 					'Wscript.Echo strSearchString							'echo selected MPCORB element for testing only
-					orbFileToWrite.WriteLine(strSearchString)
+					orbFileToWrite.WriteLine(strSearchString+"           "+object)				'write elemets to MPCORB.dat
 				Next
 			End If
 			

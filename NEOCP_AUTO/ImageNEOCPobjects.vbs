@@ -21,35 +21,55 @@ Dim imageScale
 Dim objectMotion
 Dim objectAlt
 Dim cameraTemp
+Dim enableWeather
 
 'This is where the work starts
 Call InitGlobalUserVariables()
 Call checkWeather()
-'Call CreateObjects()
-'Call ConnectObjects()
-'Call setCamTemp()
-'Call UnParkScope
-'Call TargetLoop()
-'Call ParkScope()
-'Call DisconnectObjects()
-'Call DeleteObjects()
+Call CreateObjects()
+Call ConnectObjects()
+Call setCamTemp()
+Call UnParkScope
+Call TargetLoop()
+Call ParkScope()
+Call DisconnectObjects()
+Call DeleteObjects()
 
 Sub InitGlobalUserVariables()
-
 	PathToTargetsFile = "C:\Users\brians\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO\output.txt"
 	PathToWeatherFile = "C:\Users\brians\Dropbox\ASTRO\weatherdata.txt"
 	
 	imageScale = 1.95
 	cameraTemp = -10
-	enableWeather = 1
+	enableWeather = 0
 	
 	'If you want your script to run all night regardless of errors, Set ignoreErrors = True
-	ignoreErrors = False
-	
+	ignoreErrors = False	
 End Sub
 
+Sub CreateObjects()
+	Set objTheSky 	= CreateObject("TheSkyX.Application") 
+	Set objTele		= CreateObject("TheSkyX.sky6RASCOMTele") 
+	Set objCam 		= CreateObject("TheSkyX.ccdsoftCamera") 	
+End Sub
+
+Sub ConnectObjects()
+	objTele.Connect()
+	objCam.Connect()
+End Sub
+
+Sub DisconnectObjects()
+	objTele.Disconnect()
+	objCam.Disconnect()
+End Sub 
+
+Sub DeleteObjects()
+	Set objTheSky = Nothing
+	Set objTele = Nothing
+	Set objCam = Nothing
+End Sub 
+
 Sub GetExposureData()
-	
 	expTime = (60*(imageScale/objectMotion))
 	
 	If (expTime >= 30) AND (expTime < 45) Then
@@ -61,21 +81,46 @@ Sub GetExposureData()
 	End If
 	
 	imageCount = round((60*(60/expTime)),0)
-
 End Sub
 
-Sub GetDataFromTextFile(LineFromFile, szTargetName, vMag, objectMotion)
-
+Sub GetObjectFromList(LineFromFile, szTargetName, vMag, objectMotion)
 	szTargetName= Mid(LineFromFile,1,10)
 	targetName = "MPL " + szTargetName 
 	vMag = Mid(LineFromFile,32,4)
 	objectMotion = Mid(LineFromFile,59,5)
-
 End Sub
 
+Sub GetWeatherfromFile(LineFromFile, cloudCover, rainFlag)
+	cloudCover= Mid(LineFromFile,94,1)
+	rainFlag= Mid(LineFromFile,98,1)
+End Sub
+Sub checkWeather()
+	
+	Dim WeatherFile
+	Dim fso
+	Const ForReading = 1
+	Dim cloudCover
+	
+	If enableWeather = 1 Then
+		Set fso = CreateObject("Scripting.FileSystemObject")
+		Set WeatherFile = fso.OpenTextFile(PathToWeatherFile, ForReading)
+		Call GetWeatherfromFile(WeatherFile.ReadLine, cloudCover, rainFlag)
+	
+		Do While (cloudCover >=2)
+			if (cloudCover = 2) Then
+				cloudType = " Light "
+				CreateObject("WScript.Shell").Popup cloudType& " clouds detected  sleeping for 60 seconds", 10, "Title"
+				Wscript.Sleep 60000
+			else
+				cloudType = " Heavy "
+				CreateObject("WScript.Shell").Popup cloudType& " clouds detected  exiting...", 10, "Title"
+				WScript.Quit
+			End If
+		Loop
+	End If
+End Sub
 
 Sub GetUpdatedCoordinates(targetName, dRa, dDec, objectAlt)
-
 	Set objTheSkyChart = CreateObject("TheSkyX.sky6StarChart") 
 	status = objTheSkyChart.Find (targetName)
 	Set objTheSkyInfo = CreateObject("TheSkyX.sky6ObjectInformation") 
@@ -86,7 +131,6 @@ Sub GetUpdatedCoordinates(targetName, dRa, dDec, objectAlt)
 	dDec = objTheSkyInfo.ObjInfoPropOut
 	status = objTheSkyInfo.Property (59)
 	objectAlt = objTheSkyInfo.ObjInfoPropOut
-
 End Sub
 
 Sub PromptOnError(bErrorOccurred)
@@ -116,7 +160,7 @@ End Sub
 
 Sub TargetLoop()
 	On Error Resume Next
-	Dim TxtFile
+	Dim TargetsFile
 	Dim fso
 	Const ForReading = 1
 	Dim dRa
@@ -125,14 +169,14 @@ Sub TargetLoop()
 	Dim szTargetName
 
 	Set fso = CreateObject("Scripting.FileSystemObject")
-	Set TxtFile = fso.OpenTextFile(PathToTargetsFile, ForReading)
+	Set TargetsFile = fso.OpenTextFile(PathToTargetsFile, ForReading)
 
-	Do While (TxtFile.AtEndOfStream <> True)
+	Do While (TargetsFile.AtEndOfStream <> True)
 	
 		Err.Clear 'Clear the error object
 		bErrorOccurred = False 'No error has occurred
 			
-		Call GetDataFromTextFile(TxtFile.ReadLine, szTargetName, vMag, objectMotion)
+		Call GetObjectFromList(TargetsFile.ReadLine, szTargetName, vMag, objectMotion)
 		Call GetExposureData()
 		
 		msgbox (targetName & " " & vMag & " " & objectMotion & " " & imageCount & " " & expTime)
@@ -144,6 +188,7 @@ Sub TargetLoop()
 
 			if (bErrorOccurred = False) then
 			
+				Call checkWeather()
 				Call checkObjectElev()
 				Call objTele.SlewToRaDec(dRa, dDec, targetName)
 				Call PromptOnError(bErrorOccurred)
@@ -156,40 +201,24 @@ Sub TargetLoop()
 		
 			if (bErrorOccurred = False) then
 				Call takeImage()
-				msgbox "calling takeImage"
 				Call PromptOnError(bErrorOccurred)
 				imageTaken = imageTaken + 1
 			else 
-				imageTaken = imageCount+1
+				imageTaken = imageCount + 1
 			
 			end if
 		Loop
 	Loop
 End Sub
 
-Sub CreateObjects()
-	Set objTheSky 	= CreateObject("TheSkyX.Application") 
-	Set objTele		= CreateObject("TheSkyX.sky6RASCOMTele") 
-	Set objCam 		= CreateObject("TheSkyX.ccdsoftCamera") 
-End Sub
-
-Sub ConnectObjects()
-	objTele.Connect()
-	objCam.Connect()
-End Sub
-
 Sub setCamTemp()
-
-	objCam.Connect()
 	objCam.TemperatureSetpoint() = cameraTemp					
 	objCam.RegulateTemperature() = 1
-	currentTemp = objCam.Temperature
-	
-	while currentTemp < (cameraTemp - 1)									'
+	currentTemp = objCam.Temperature	
+	Do while (currentTemp >= (cameraTemp + 1))									'
 		currentTemp = objCam.Temperature
 		wscript.Sleep 10000
-	Wend
-	
+	Loop	
 End Sub
 
 Sub UnParkScope()
@@ -215,39 +244,5 @@ Sub takeImage()
 	status = objCam.TakeImage()
 End Sub
 
-Sub checkWeather()
-	
-	Dim WeatherFile
-	Dim fso
-	Const ForReading = 1
-	Dim cloudCover
-	
-	Set fso = CreateObject("Scripting.FileSystemObject")
-	Set WeatherFile = fso.OpenTextFile(PathToWeatherFile, ForReading)
-	Call GetWeatherfromFile(WeatherFile.ReadLine, cloudCover, rainFlag)
-	
-	if (cloudCover >=0) OR (rainFlag >=1) Then
-		msgbox (cloudCover & " " & rainFlag)
-	End If
 
-End Sub
 
-Sub GetWeatherfromFile(LineFromFile, cloudCover, rainFlag)
-
-	cloudCover= Mid(LineFromFile,94,1)
-	rainFlag= Mid(LineFromFile,98,1)
-
-	
-End Sub
-    
-
-Sub DisconnectObjects()
-	objTele.Disconnect()
-	'objCam.Disconnect()
-End Sub 
-
-Sub DeleteObjects()
-	Set objTheSky = Nothing
-	Set objTele = Nothing
-	Set objCam = Nothing
-End Sub 

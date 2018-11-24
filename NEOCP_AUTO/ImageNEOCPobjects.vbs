@@ -1,4 +1,6 @@
 
+' this is based on the vbscript examples from bisque.com 
+
 'Option Explicit
 
 'Global Objects
@@ -11,23 +13,30 @@ Dim objCam
 'Global User Variables see InitGlobalUserVariables()
 Dim PathToTargetsFile
 Dim PathToWeatherFile
-Dim expTime
 Dim ignoreErrors
 Dim targetName
 Dim status
+
+Dim expTime
 Dim imageCount
 Dim imageTaken
 Dim imageScale
+
 Dim objectMotion
 Dim objectAlt
+Dim minSlewElevation
+
 Dim cameraTemp
+Dim currentTemp
+
 Dim enableWeather
+Dim rainFlag
 
 'This is where the work starts
 Call InitGlobalUserVariables()
-Call checkWeather()
 Call CreateObjects()
 Call ConnectObjects()
+Call checkWeather()
 Call setCamTemp()
 Call UnParkScope
 Call TargetLoop()
@@ -41,7 +50,8 @@ Sub InitGlobalUserVariables()
 	
 	imageScale = 1.95
 	cameraTemp = -10
-	enableWeather = 0
+	enableWeather = 1
+	minSlewElevation = 0
 	
 	'If you want your script to run all night regardless of errors, Set ignoreErrors = True
 	ignoreErrors = False	
@@ -114,6 +124,9 @@ Sub checkWeather()
 			else
 				cloudType = " Heavy "
 				CreateObject("WScript.Shell").Popup cloudType& " clouds detected  exiting...", 10, "Title"
+				Call ParkScope()
+				Call DisconnectObjects()
+				Call DeleteObjects()
 				WScript.Quit
 			End If
 		Loop
@@ -158,9 +171,9 @@ Sub PromptOnError(bErrorOccurred)
 	End if 
 End Sub
 
-Sub TargetLoop()
-	On Error Resume Next
-	Dim TargetsFile
+Sub TargetLoop() 										' This is where the majority of the work takes place 
+	On Error Resume Next								' yes, we really want to do this to get to the error trap
+	Dim TargetsFile										' this is the ouput from parse_neo_new.vbs from NEOCP 
 	Dim fso
 	Const ForReading = 1
 	Dim dRa
@@ -180,23 +193,21 @@ Sub TargetLoop()
 		Call GetExposureData()
 		
 		msgbox (targetName & " " & vMag & " " & objectMotion & " " & imageCount & " " & expTime)
+		
 		imageTaken = 0
 		
 		Do While (imageTaken <= imageCount)
-			
 			Call GetUpdatedCoordinates(targetName, dRa, dDec, objectAlt)
-
-			if (bErrorOccurred = False) then
 			
+			if (bErrorOccurred = False) then	
 				Call checkWeather()
 				Call checkObjectElev()
 				Call objTele.SlewToRaDec(dRa, dDec, targetName)
 				Call PromptOnError(bErrorOccurred)
 				
-				if (objectAlt < 0) Then
+				if (objectAlt < minSlewElevation) Then
 					imageTaken = imageCount
 				End If
-			
 			End If
 		
 			if (bErrorOccurred = False) then
@@ -230,9 +241,9 @@ Sub ParkScope()
 End Sub
 
 Sub checkObjectElev()
-		Do while (objectAlt < 0) 
-			CreateObject("WScript.Shell").Popup "objectAlt is " & round(objectAlt,0) & " sleeping for 60 seconds", 10, "Title"
-			Wscript.Sleep 60000
+		Do while (objectAlt < minSlewElevation) 
+			CreateObject("WScript.Shell").Popup "objectAlt is " & round(objectAlt,0) & " sleeping for 5  minutes", 10, "Title"
+			Wscript.Sleep 300000
 		Loop
 End Sub
 

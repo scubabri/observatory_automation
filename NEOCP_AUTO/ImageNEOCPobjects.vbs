@@ -19,8 +19,11 @@ Dim status
 
 Dim expTime
 Dim imageCount
-Dim imageTaken
+Dim imagesTaken
 Dim imageScale
+Dim maxObjMove
+Dim SlewDelay
+Dim SlewCountDown
 
 Dim objectMotion
 Dim objectAlt
@@ -51,7 +54,8 @@ Sub InitGlobalUserVariables()
 	imageScale = 1.95
 	cameraTemp = -10
 	enableWeather = 1
-	minSlewElevation = 0
+	minSlewElevation = 30
+	maxObjMove = 8 						' max object move before closed loop slew is 8 arcmin
 	
 	'If you want your script to run all night regardless of errors, Set ignoreErrors = True
 	ignoreErrors = False	
@@ -91,6 +95,7 @@ Sub GetExposureData()
 	End If
 	
 	imageCount = round((60*(60/expTime)),0)
+	slewDelay  = round((60*maxObjMove)/objectMotion,0)						' FOV is 23'X15', 8' to keep object in FOV, delay this many images before slew
 End Sub
 
 Sub GetObjectFromList(LineFromFile, szTargetName, vMag, objectMotion)
@@ -104,6 +109,7 @@ Sub GetWeatherfromFile(LineFromFile, cloudCover, rainFlag)
 	cloudCover= Mid(LineFromFile,94,1)
 	rainFlag= Mid(LineFromFile,98,1)
 End Sub
+
 Sub checkWeather()
 	
 	Dim WeatherFile
@@ -171,6 +177,20 @@ Sub PromptOnError(bErrorOccurred)
 	End if 
 End Sub
 
+Sub ClosedLoopSlew(targetName)
+	cdLight = 1														'Constant for frame type emumeration
+	cdAutoDark = 3													'Constant for image reduction enumeration
+	Set objTheSkyChart = CreateObject("TheSkyX.sky6StarChart") 
+	set objCls = CreateObject("TheSkyX.ClosedLoopSlew")				'Create object for ClosedLoopSlew class
+	objCam.ExposureTime = 10.0										'Set the exposure time
+	objCam.Delay = 5.0												'Set an exposure delay
+	objCam.Frame = cdLight											'Set a frame type
+	objCam.ImageReduction = cdAutoDark								'Set for autodark
+	objCam.Asynchronous = False										'Set for synchronous imaging (wait until done)
+	status = objTheSkyChart.Find (targetName)						'Find targetName
+	status = objCls.exec()
+End Sub
+
 Sub TargetLoop() 										' This is where the majority of the work takes place 
 	On Error Resume Next								' yes, we really want to do this to get to the error trap
 	Dim TargetsFile										' this is the ouput from parse_neo_new.vbs from NEOCP 
@@ -194,28 +214,34 @@ Sub TargetLoop() 										' This is where the majority of the work takes place
 		
 		msgbox (targetName & " " & vMag & " " & objectMotion & " " & imageCount & " " & expTime)
 		
-		imageTaken = 0
+		imagesTaken = 0
+		slewCountDown = slewDelay						' set this for initial closed loop slew
 		
-		Do While (imageTaken <= imageCount)
+		Do While (imagesTaken <= imageCount)
 			Call GetUpdatedCoordinates(targetName, dRa, dDec, objectAlt)
 			
 			if (bErrorOccurred = False) then	
 				Call checkWeather()
 				Call checkObjectElev()
-				Call objTele.SlewToRaDec(dRa, dDec, targetName)
+				
+				if (slewCountDown >= slewDelay) Then
+					Call ClosedLoopSlew(targetName)
+					slewCountDown = 0 
+				End If
+				slewCountDown = slewCountDown + 1
 				Call PromptOnError(bErrorOccurred)
 				
 				if (objectAlt < minSlewElevation) Then
-					imageTaken = imageCount
+					imagesTaken = imageCount
 				End If
 			End If
 		
 			if (bErrorOccurred = False) then
 				Call takeImage()
 				Call PromptOnError(bErrorOccurred)
-				imageTaken = imageTaken + 1
+				imagesTaken = imagesTaken + 1
 			else 
-				imageTaken = imageCount + 1
+				imagesTaken = imageCount + 1
 			
 			end if
 		Loop
@@ -248,12 +274,10 @@ Sub checkObjectElev()
 End Sub
 
 Sub takeImage()
+	objCam.Delay = 0
 	objCam.ExposureTime = expTime
 	objCam.Frame = 1 
 	objCam.ImageReduction = 0
 	objCam.AutoSaveOn = 1 
 	status = objCam.TakeImage()
 End Sub
-
-
-

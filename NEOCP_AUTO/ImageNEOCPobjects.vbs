@@ -28,6 +28,8 @@ Dim SlewCountDown
 Dim objectMotion
 Dim objectAlt
 Dim minSlewElevation
+Dim objectRate
+Dim skySeeing
 
 Dim cameraTemp
 Dim currentTemp
@@ -39,7 +41,7 @@ Dim rainFlag
 Call InitGlobalUserVariables()
 Call CreateObjects()
 Call ConnectObjects()
-Call checkWeather()
+'Call checkWeather()
 Call setCamTemp()
 Call UnParkScope
 Call TargetLoop()
@@ -54,8 +56,9 @@ Sub InitGlobalUserVariables()
 	imageScale = 1.95
 	cameraTemp = -10
 	enableWeather = 1
-	minSlewElevation = 30
+	minSlewElevation = 0
 	maxObjMove = 8 						' max object move before closed loop slew is 8 arcmin
+	skySeeing = 4
 	
 	'If you want your script to run all night regardless of errors, Set ignoreErrors = True
 	ignoreErrors = False	
@@ -84,7 +87,8 @@ Sub DeleteObjects()
 End Sub 
 
 Sub GetExposureData()
-	expTime = (60*(imageScale/objectMotion))
+	Call GetUpdatedCoordinates(targetName, dRa, dDec, objectAlt, objectRate)
+	expTime = round((60*(imageScale/objectRate)*skySeeing),0)
 	
 	If (expTime >= 30) AND (expTime < 45) Then
 		expTime = 30 
@@ -124,6 +128,7 @@ Sub checkWeather()
 	
 		Do While (cloudCover >=2)
 			if (cloudCover = 2) Then
+				call objTele.SetTracking(0,1,0,0)
 				cloudType = " Light "
 				CreateObject("WScript.Shell").Popup cloudType& " clouds detected  sleeping for 60 seconds", 10, "Title"
 				Wscript.Sleep 60000
@@ -135,11 +140,14 @@ Sub checkWeather()
 				Call DeleteObjects()
 				WScript.Quit
 			End If
+			Call objTele.SetTracking(1,1,0,0)
+			slewCountDown = slewDelay
 		Loop
 	End If
+	WeatherFile.Close 
 End Sub
 
-Sub GetUpdatedCoordinates(targetName, dRa, dDec, objectAlt)
+Sub GetUpdatedCoordinates(targetName, dRa, dDec, objectAlt, objectRate)
 	Set objTheSkyChart = CreateObject("TheSkyX.sky6StarChart") 
 	status = objTheSkyChart.Find (targetName)
 	Set objTheSkyInfo = CreateObject("TheSkyX.sky6ObjectInformation") 
@@ -150,6 +158,12 @@ Sub GetUpdatedCoordinates(targetName, dRa, dDec, objectAlt)
 	dDec = objTheSkyInfo.ObjInfoPropOut
 	status = objTheSkyInfo.Property (59)
 	objectAlt = objTheSkyInfo.ObjInfoPropOut
+	status = objTheSkyInfo.Property (77)
+	objectRateRA = objTheSkyInfo.ObjInfoPropOut
+	status = objTheSkyInfo.Property (78)
+	objectRateDEC = objTheSkyInfo.ObjInfoPropOut
+	objectRate = round(sqr((objRateRA*objRateRA)+(objectRateDEC*objectRateDEC))*60,2)
+	'msgbox "objectRate is " & objectRate
 End Sub
 
 Sub PromptOnError(bErrorOccurred)
@@ -192,7 +206,7 @@ Sub ClosedLoopSlew(targetName)
 End Sub
 
 Sub TargetLoop() 										' This is where the majority of the work takes place 
-	On Error Resume Next								' yes, we really want to do this to get to the error trap
+	'On Error Resume Next								' yes, we really want to do this to get to the error trap
 	Dim TargetsFile										' this is the ouput from parse_neo_new.vbs from NEOCP 
 	Dim fso
 	Const ForReading = 1
@@ -206,22 +220,24 @@ Sub TargetLoop() 										' This is where the majority of the work takes place
 
 	Do While (TargetsFile.AtEndOfStream <> True)
 	
-		Err.Clear 'Clear the error object
-		bErrorOccurred = False 'No error has occurred
+		'Err.Clear 'Clear the error object
+		'bErrorOccurred = False 'No error has occurred
 			
 		Call GetObjectFromList(TargetsFile.ReadLine, szTargetName, vMag, objectMotion)
 		Call GetExposureData()
 		
-		msgbox (targetName & " " & vMag & " " & objectMotion & " " & imageCount & " " & expTime)
+		'msgbox (targetName & " " & vMag & " " & objectMotion & " " & imageCount & " " & expTime)
+		CreateObject("WScript.Shell").Popup targetName & " vMag " & vMag & " Motion " & objectMotion & " Imgcount " & imageCount & " Exptime " & expTime, 10, "Title"
+
 		
 		imagesTaken = 0
 		slewCountDown = slewDelay						' set this for initial closed loop slew
 		
 		Do While (imagesTaken <= imageCount)
-			Call GetUpdatedCoordinates(targetName, dRa, dDec, objectAlt)
+			Call GetUpdatedCoordinates(targetName, dRa, dDec, objectAlt,objectRate)
 			
 			if (bErrorOccurred = False) then	
-				Call checkWeather()
+				'Call checkWeather()
 				Call checkObjectElev()
 				
 				if (slewCountDown >= slewDelay) Then
@@ -267,10 +283,13 @@ Sub ParkScope()
 End Sub
 
 Sub checkObjectElev()
-		Do while (objectAlt < minSlewElevation) 
-			CreateObject("WScript.Shell").Popup "objectAlt is " & round(objectAlt,0) & " sleeping for 5  minutes", 10, "Title"
+		Do while (objectAlt < minSlewElevation)
+			'Call objTele.SetTracking(0,1,0,0)
+			Call GetUpdatedCoordinates(targetName, dRa, dDec, objectAlt, objectRate)
+			CreateObject("WScript.Shell").Popup "objectAlt is " & round(objectAlt,0) & " sleeping for 5  minutes", 20, "Title"
 			Wscript.Sleep 300000
 		Loop
+		'Call objTele.SetTracking(1,1,0,0)
 End Sub
 
 Sub takeImage()

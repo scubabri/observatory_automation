@@ -13,6 +13,7 @@ Dim objCam
 'Global User Variables see InitGlobalUserVariables()
 Dim PathToTargetsFile
 Dim PathToWeatherFile
+Dim PathToSaveBase
 Dim TargetArray()
 Dim ignoreErrors
 Dim objectName
@@ -42,8 +43,8 @@ Dim rainFlag
 'This is where the work starts
 Call InitGlobalUserVariables()
 Call connectObjects()
-Call createTargetList()
 Call checkWeather()
+Call createTargetList()
 Call setCamTemp()
 Call UnparkScope
 Call targetLoop()
@@ -53,10 +54,11 @@ Call DisconnectObjects()
 Sub InitGlobalUserVariables()
 	PathToTargetsFile = "D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO\output.txt"
 	PathToWeatherFile = "D:\Dropbox\ASTRO\weatherdata.txt"
+	PathToSaveBase = "D:\Dropbox\ASTRO\IMAGES\MPL\"
 		
 	imageScale = 1.95
 	cameraTemp = -10
-	enableWeather = 0
+	enableWeather = 1
 	minSlewElevation = 0
 	maxObjMove = 8 						' max object move before closed loop slew is 8 arcmin
 	skySeeing = 4
@@ -82,26 +84,31 @@ Sub DisconnectObjects()
 End Sub 
 
 Sub createTargetList()
+	
 	Dim fso
 	Dim TargetsFile
 	Dim imageTime
+	Dim tempRa
+	Dim shiftRa
 	Const ForReading = 1	
 	Set fso = CreateObject("Scripting.FileSystemObject")
 	Set TargetsFile = fso.OpenTextFile(PathToTargetsFile, ForReading)
+	
 	Do While (TargetsFile.AtEndOfStream <> True)
 		targetString = TargetsFile.ReadLine
+		tempRa = replace(targetString, Mid(targetString,18,7), CStr((Mid(targetString,18,7) * 15)))
 		ReDim Preserve TargetArray(i)
-		TargetArray(i) = targetString
-		'Wscript.Echo TargetArray(i)
-		i=i+1
+		TargetArray(i) = tempRa
+		i = i + 1
 	Loop
+	
 	Set fso = Nothing
 	TargetsFile.Close()
 	
 	For i = LBound(TargetArray) to UBound(TargetArray)
 		For j = LBound(TargetArray) to UBound(TargetArray)
 			If j <> UBound(TargetArray) Then
-				If CDbl(Mid(TargetArray(j),18,7)) < CDbl(Mid(TargetArray(j + 1),18,7)) Then
+				If (CDbl(Mid(TargetArray(j),18,8))) < (CDbl(Mid(TargetArray(j + 1),18,8))) Then
 					TempValue = TargetArray(j + 1)
 					TargetArray(j + 1) = TargetArray(j)
 					TargetArray(j) = TempValue
@@ -109,13 +116,42 @@ Sub createTargetList()
 			End If
 		Next
 	Next
-		'szobjectName = Mid(targetString,1,10)
-		'objectName = "MPL " + szobjectName 
-		'Call getCoordinates(objectName, objectRa, objectDec, objectAlt, objectRate)
-		'Call getObjectTimes(objectName, objectRa, objectDec, objectTransit)
-		'decimalTime = round(Hour(Now()) + (Minute(Now())/60 + (Second(Now())/3600)),4)	
+	
+	For i = LBound(TargetArray) to UBound(TargetArray)
+		if i = 0 Then
+			shiftRa = abs(Cint(Mid(TargetArray(i),18,8)) - 360)
+			tempRa = replace(TargetArray(i), Mid(TargetArray(i),18,8), "0.0000")
+			TargetArray(i) = tempRa		
+		Else 
+			shiftRa = abs(CDbl(Mid(TargetArray(i),18,8)) - shiftRa)
+			tempRa = replace(TargetArray(i), Mid(TargetArray(i),18,8), CStr(shiftRa) & "   ")
+			TargetArray(i) = tempRa
+		End If
+	Next
+		
+	For i = LBound(TargetArray) to UBound(TargetArray)
+		For j = LBound(TargetArray) to UBound(TargetArray)
+			If j <> UBound(TargetArray) Then
+				'MsgBox TargetArray(j) &" " & TargetArray(j+1) 
+				If (CDbl(Mid(TargetArray(j),18,8))) > (CDbl(Mid(TargetArray(j + 1),18,8))) Then
+					TempValue = TargetArray(j + 1)
+					TargetArray(j + 1) = TargetArray(j)
+					TargetArray(j) = TempValue
+				End If
+			End If
+		Next
+	Next
+	
+'Set objFSO=CreateObject("Scripting.FileSystemObject")
+'	outFile = "D:\Dropbox\ASTRO\SCRIPTS\NEOCP_AUTO\temp.txt"
+'	Set objFile = objFSO.OpenTextFile(outFile,8,True)
+'	For i = LBound(TargetArray) to UBound(TargetArray)
+'		objFile.WriteLine TargetArray(i)
+'	Next
+'	objFile.Close()
+'   Wscript.Quit
 End Sub
-
+	
 Sub GetExposureData()
 	Call getCoordinates(objectName, objectRa, objectDec, objectAlt, objectRate)
 	expTime = round((60*(imageScale/objectRate)*skySeeing),0)
@@ -128,21 +164,21 @@ Sub GetExposureData()
 		expTime = 60 
 	End If
 	
-	imageCount = round((60*(60/expTime)),0)
+	imageCount = round((2*(60/expTime)),0)
 	slewDelay  = round((60*maxObjMove)/objectRate,0)						' FOV is 23'X15', 8' to keep object in FOV, delay this many images before slew
 End Sub
 
-Sub GetObjectFromArray(szobjectName, vMag)
-	szobjectName = Mid(targetArray(index),1,10)
+Sub GetObjectFromArray(szobjectName, vMag, targetIndex)
+	szobjectName = Mid(targetArray(targetIndex),1,10)
 	objectName = "MPL " + szobjectName 
-	vMag = Mid(targetArray(index),37,4)
+	vMag = Mid(targetArray(targetIndex),37,4)
 	
 End Sub
 
-Sub GetWeatherfromFile(LineFromFile, cloudCover, rainFlag)
-	cloudCover= Mid(LineFromFile,94,1)
-	rainFlag= Mid(LineFromFile,98,1)
-End Sub
+'Sub GetWeatherfromFile(LineFromFile, cloudCover, rainFlag)
+'	cloudCover= Mid(LineFromFile,94,1)
+'	rainFlag= Mid(LineFromFile,98,1)
+'End Sub
 
 Sub checkWeather()
 	
@@ -154,11 +190,15 @@ Sub checkWeather()
 	If enableWeather = 1 Then
 		Set fso = CreateObject("Scripting.FileSystemObject")
 		Set WeatherFile = fso.OpenTextFile(PathToWeatherFile, ForReading)
-		Call GetWeatherfromFile(WeatherFile.ReadLine, cloudCover, rainFlag)
-	
+		'Call GetWeatherfromFile(WeatherFile.ReadLine, cloudCover, rainFlag)
+		
+		LineFromFile = WeatherFile.ReadAll()
+		cloudCover= Mid(LineFromFile,94,1)
+		rainFlag= Mid(LineFromFile,98,1)
+		
 		Do While (cloudCover >=2)
 			if (cloudCover = 2) Then
-				call objTele.SetTracking(0,1,0,0)
+				'call objTele.SetTracking(0,1,0,0)
 				cloudType = " Light "
 				CreateObject("WScript.Shell").Popup cloudType& " clouds detected  sleeping for 60 seconds", 10, "Title"
 				Wscript.Sleep 60000
@@ -167,10 +207,9 @@ Sub checkWeather()
 				CreateObject("WScript.Shell").Popup cloudType& " clouds detected  exiting...", 10, "Title"
 				Call parkScope()
 				Call DisconnectObjects()
-				Call DeleteObjects()
 				WScript.Quit
 			End If
-			Call objTele.SetTracking(1,1,0,0)
+			'Call objTele.SetTracking(1,1,0,0)
 			slewCountDown = slewDelay
 		Loop
 		WeatherFile.Close 
@@ -248,21 +287,25 @@ Sub targetLoop() 										' This is where the majority of the work takes place
 	Dim szobjectName
 	Dim targetIndex
 	targetIndex = 0
-    	
+	
+	
 	Do while targetIndex < UBound(targetArray)+1
 		'Err.Clear 'Clear the error object
 		'bErrorOccurred = False 'No error has occurred
 				
-		Call GetObjectFromArray(szobjectName, vMag)
+		Call GetObjectFromArray(szobjectName, vMag, targetIndex)
 		Call GetExposureData()
 		
-		CreateObject("WScript.Shell").Popup objectName & " vMag " & vMag & " Motion " & objectRate & " Imgcount " & imageCount & " Exptime " & expTime, 10, "Title"
-		'Wscript.Quit
+		CreateObject("WScript.Shell").Popup objectName & " vMag " & vMag & " Motion " & objectRate & " Imgcount " & imageCount & " Exptime " & expTime, 10, objectName
+		
 		imagesTaken = 0
 		slewCountDown = slewDelay						' set this for initial closed loop slew
 		
 		Do While (imagesTaken <= imageCount)
 			Call getCoordinates(objectName, objectRa, objectDec, objectAlt,objectRate)
+			
+			objCam.AutoSavePath = PathToSaveBase & MonthName(month(date)) & " " & Day(date()) & " " & Year(date()) & "\" & Trim(objectName)
+
 			
 			if (bErrorOccurred = False) then	
 				Call checkWeather()
@@ -281,6 +324,7 @@ Sub targetLoop() 										' This is where the majority of the work takes place
 			End If
 		
 			if (bErrorOccurred = False) then
+			    
 				Call takeImage()
 				Call PromptOnError(bErrorOccurred)
 				imagesTaken = imagesTaken + 1
@@ -289,6 +333,7 @@ Sub targetLoop() 										' This is where the majority of the work takes place
 			
 			end if
 		Loop
+	targetIndex = targetIndex + 1
 	Loop
 End Sub
 
